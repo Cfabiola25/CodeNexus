@@ -43,14 +43,16 @@ services:
       legacy-db:
         condition: service_healthy
 
-  # Agreguen aquí su gateway (puerto de contrato 8082) y los servicios que necesiten.
-  # gateway:
-  #   build: ./src
-  #   env_file: .env
-  #   ports:
-  #     - "8082:8082"
-  #   volumes:
-  #     - ./logs:/app/logs
+  gateway:
+    build: ./src
+    env_file: .env
+    ports:
+      - "8082:8082"
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      legacy-db:
+        condition: service_healthy
 
 volumes:
   legacy-db-data:
