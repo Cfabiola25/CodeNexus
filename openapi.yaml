@@ -1,0 +1,371 @@
+openapi: 3.0.3
+info:
+  title: Legacy Escape API Gateway
+  description: Contrato de servicios de la capa de transición para el dominio Afiliaciones de la Caja de Compensación Familiar.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8082
+    description: Gateway local
+paths:
+  /health:
+    get:
+      summary: Verificación de salud del gateway y del servicio legacy
+      operationId: getHealth
+      responses:
+        '200':
+          description: Estado del gateway y de la base de datos legacy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/members/{document}:
+    get:
+      summary: Consulta información canónica de un afiliado
+      operationId: getMemberByDocument
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: document
+          in: path
+          required: true
+          description: Número de documento de identificación del afiliado
+          schema:
+            type: string
+            example: "1019282447"
+      responses:
+        '200':
+          description: Afiliado encontrado con su empresa asignada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '503':
+          $ref: '#/components/responses/LegacyUnavailableError'
+
+  /api/v1/members/{document}/beneficiaries:
+    get:
+      summary: Consulta beneficiarios asociados a un afiliado
+      operationId: getMemberBeneficiaries
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: document
+          in: path
+          required: true
+          description: Número de documento del afiliado titular
+          schema:
+            type: string
+            example: "1019282447"
+      responses:
+        '200':
+          description: Listado de beneficiarios registrados para el afiliado
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Beneficiary'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '503':
+          $ref: '#/components/responses/LegacyUnavailableError'
+
+  /api/v1/companies/{id}:
+    get:
+      summary: Consulta detalle de empresa y número de miembros activos
+      operationId: getCompanyById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador o código de la empresa
+          schema:
+            type: string
+            example: "EMP01"
+      responses:
+        '200':
+          description: Información de la empresa y conteo de afiliados activos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '503':
+          $ref: '#/components/responses/LegacyUnavailableError'
+
+  /api/v1/members/{document}/retirements:
+    post:
+      summary: Registra el retiro de un afiliado de forma idempotente
+      operationId: createMemberRetirement
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: document
+          in: path
+          required: true
+          description: Documento del afiliado que solicita o registra el retiro
+          schema:
+            type: string
+            example: "1019282447"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RetirementRequest'
+      responses:
+        '201':
+          description: Retiro registrado exitosamente en el sistema
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetirementResponse'
+        '200':
+          description: Solicitud ya procesada anteriormente (idempotencia)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetirementResponse'
+        '202':
+          description: Solicitud aceptada en cola durante indisponibilidad del legacy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetirementResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '503':
+          $ref: '#/components/responses/LegacyUnavailableError'
+
+  /api/v1/migration/status:
+    get:
+      summary: Consulta el estado de migración de los dominios del sistema
+      operationId: getMigrationStatus
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Estado actual de migración de cada dominio
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MigrationStatusResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - legacy
+      properties:
+        status:
+          type: string
+          example: "UP"
+        legacy:
+          type: string
+          enum: ["UP", "DOWN"]
+          example: "UP"
+
+    CompanyBrief:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          example: "EMP01"
+        name:
+          type: string
+          example: "SERVICIOS INTEGRADOS S.A.S."
+
+    MemberResponse:
+      type: object
+      required:
+        - document
+        - fullName
+        - status
+        - company
+      properties:
+        document:
+          type: string
+          example: "1019282447"
+        fullName:
+          type: string
+          example: "CARLOS ANDRES PEREZ GOMEZ"
+        status:
+          type: string
+          enum: ["ACTIVE", "RETIRED", "SUSPENDED"]
+          example: "ACTIVE"
+        company:
+          $ref: '#/components/schemas/CompanyBrief'
+
+    Beneficiary:
+      type: object
+      required:
+        - document
+        - fullName
+        - relationship
+      properties:
+        document:
+          type: string
+          example: "1098765432"
+        fullName:
+          type: string
+          example: "MARIA CAMILA PEREZ LOPEZ"
+        relationship:
+          type: string
+          example: "HIJO"
+
+    CompanyResponse:
+      type: object
+      required:
+        - id
+        - name
+        - activeMembers
+      properties:
+        id:
+          type: string
+          example: "EMP01"
+        name:
+          type: string
+          example: "SERVICIOS INTEGRADOS S.A.S."
+        activeMembers:
+          type: integer
+          example: 45
+
+    RetirementRequest:
+      type: object
+      required:
+        - requestId
+        - date
+        - reason
+      properties:
+        requestId:
+          type: string
+          example: "req-987654"
+        date:
+          type: string
+          format: date
+          example: "2026-10-13"
+        reason:
+          type: string
+          example: "Fin de contrato laboral"
+
+    RetirementResponse:
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: string
+          example: "PROCESSED"
+        message:
+          type: string
+          example: "Retiro procesado correctamente"
+        movementId:
+          type: integer
+          example: 1042
+
+    MigrationStatusResponse:
+      type: object
+      required:
+        - domains
+      properties:
+        domains:
+          type: object
+          properties:
+            affiliations:
+              type: string
+              enum: ["LEGACY", "DUAL", "MODERN"]
+              example: "DUAL"
+            retirements:
+              type: string
+              enum: ["LEGACY", "DUAL", "MODERN"]
+              example: "LEGACY"
+            companies:
+              type: string
+              enum: ["LEGACY", "DUAL", "MODERN"]
+              example: "LEGACY"
+
+    ErrorResponse:
+      type: object
+      required:
+        - message
+        - error_id
+      properties:
+        message:
+          type: string
+          example: "Recurso no encontrado"
+        error_id:
+          type: string
+          example: "err-404-9812"
+
+  responses:
+    UnauthorizedError:
+      description: Token ausente o invalido
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    ForbiddenError:
+      description: Consumidor no autorizado para operaciones de escritura
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFoundError:
+      description: Recurso no encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    LegacyUnavailableError:
+      description: Base de datos legacy no disponible
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - code
+              - message
+              - error_id
+            properties:
+              code:
+                type: string
+                example: "LEGACY_UNAVAILABLE"
+              message:
+                type: string
+                example: "La base de datos legacy no responde en el tiempo limite"
+              error_id:
+                type: string
+                example: "err-503-0192"
