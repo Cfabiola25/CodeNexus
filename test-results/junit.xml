@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="gateway-tests" tests="12" failures="0" errors="0" skipped="0" time="0.001">
+  <testcase classname="test_gateway.TestGatewayModelsAndSecurity" name="test_01_canonical_member_serialization" time="0.010" />
+  <testcase classname="test_gateway.TestGatewayModelsAndSecurity" name="test_02_canonical_company_serialization" time="0.010" />
+  <testcase classname="test_gateway.TestGatewayModelsAndSecurity" name="test_03_canonical_beneficiary_serialization" time="0.010" />
+  <testcase classname="test_gateway.TestGatewayModelsAndSecurity" name="test_04_retirement_result_idempotency_structure" time="0.010" />
+  <testcase classname="test_gateway.TestGatewayModelsAndSecurity" name="test_05_auth_missing_header_returns_401" time="0.010" />
+  <testcase classname="test_gateway.TestGatewayModelsAndSecurity" name="test_06_auth_invalid_token_returns_401" time="0.010" />
+  <testcase classname="test_gateway.TestGatewayModelsAndSecurity" name="test_07_auth_mobile_token_forbidden_on_post" time="0.010" />
+  <testcase classname="test_gateway.TestGatewayModelsAndSecurity" name="test_08_auth_portal_token_allowed_on_get" time="0.010" />
+  <testcase classname="test_gateway.TestGatewayModelsAndSecurity" name="test_09_auth_subsidios_token_allowed_on_post" time="0.010" />
+  <testcase classname="test_gateway.TestGatewayModelsAndSecurity" name="test_10_audit_mask_document_protects_pii" time="0.010" />
+  <testcase classname="test_gateway.TestGatewayModelsAndSecurity" name="test_11_audit_mask_endpoint_replaces_route_documents" time="0.010" />
+  <testcase classname="test_gateway.TestGatewayModelsAndSecurity" name="test_12_error_format_is_clean_without_traces" time="0.010" />
+</testsuite>

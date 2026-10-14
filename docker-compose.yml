@@ -54,5 +54,16 @@ services:
       legacy-db:
         condition: service_healthy
 
+  tests:
+    build:
+      context: .
+      dockerfile: tests/Dockerfile
+    profiles: ["test"]
+    env_file: .env
+    volumes:
+      - ./test-results:/app/test-results
+    depends_on:
+      - gateway
+
 volumes:
   legacy-db-data:
