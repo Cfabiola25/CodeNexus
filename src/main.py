@@ -30,13 +30,23 @@ def get_current_migration_state() -> str:
     env_state = os.environ.get("AFFILIATIONS_MIGRATION_STATE")
     if env_state:
         return env_state.strip().upper()
-    if os.path.exists(STATE_FILE_PATH):
-        try:
-            with open(STATE_FILE_PATH, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                return data.get("affiliations", "DUAL")
-        except Exception:
-            pass
+
+    candidate_paths = [
+        STATE_FILE_PATH,
+        "/app/logs/migration_status.json",
+        "logs/migration_status.json",
+        "./logs/migration_status.json",
+    ]
+    for path in candidate_paths:
+        if os.path.exists(path):
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    status_val = data.get("affiliations")
+                    if status_val:
+                        return str(status_val).strip().upper()
+            except Exception:
+                pass
     return "DUAL"
 
 
