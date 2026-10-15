@@ -1,17 +1,9 @@
 # Plan de migración por dominio
 
-<!--
-Plantilla con el formato obligatorio.
-- Al menos 3 dominios, uno de ellos Afiliaciones.
-- Estado: LEGACY, DUAL o MODERN (debe coincidir con GET /api/v1/migration/status para Afiliaciones).
-- Criterio para avanzar: con un número medible (días, porcentaje, cantidad de errores...).
-- Rollback: cómo se vuelve al estado anterior (al menos 2 palabras).
-- La línea "Siguiente dominio:" con el nombre del próximo dominio a migrar.
-Revisen con: ./validator entregables
--->
-
 | Dominio | Estado | Criterio para avanzar | Rollback |
 |---|---|---|---|
-| | | | |
+| Afiliaciones | DUAL | 7 días continuos sin diferencias entre gateway y legacy con 0 errores | ./rollback.sh affiliations para retornar a esquema legacy |
+| Retiros | LEGACY | 14 días de operación en modo DUAL con 0 retiros perdidos y 100% de reconciliación | Revertir subsidios a sp_registrar_retiro directo |
+| Empresas | LEGACY | 30 días sin incidentes y 100% de consultas migradas al gateway | Reconfigurar portal para consulta directa a tabla empresa |
 
-Siguiente dominio:
+Siguiente dominio: Retiros
