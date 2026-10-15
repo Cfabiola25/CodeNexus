@@ -1,3 +1,4 @@
+import os
 import unittest
 from src.core.models import (
     Member,
@@ -80,7 +81,8 @@ class TestGatewayModelsAndSecurity(unittest.TestCase):
 
     def test_07_auth_mobile_token_forbidden_on_post(self):
         """El consumidor móvil tiene prohibidas las operaciones de escritura (POST -> 403)."""
-        headers = {"Authorization": "Bearer mobile-secret"}
+        mobile_token = os.environ.get("MOBILE_TOKEN", "mobile-secret")
+        headers = {"Authorization": f"Bearer {mobile_token}"}
         valid, consumer, error, status = authenticate_request(headers, "POST")
         self.assertFalse(valid)
         self.assertEqual(consumer, CONSUMER_MOBILE)
@@ -89,7 +91,8 @@ class TestGatewayModelsAndSecurity(unittest.TestCase):
 
     def test_08_auth_portal_token_allowed_on_get(self):
         """El consumidor portal debe ser autenticado exitosamente en operaciones GET."""
-        headers = {"Authorization": "Bearer portal-secret"}
+        portal_token = os.environ.get("PORTAL_TOKEN", "portal-secret")
+        headers = {"Authorization": f"Bearer {portal_token}"}
         valid, consumer, error, status = authenticate_request(headers, "GET")
         self.assertTrue(valid)
         self.assertEqual(consumer, CONSUMER_PORTAL)
@@ -98,7 +101,8 @@ class TestGatewayModelsAndSecurity(unittest.TestCase):
 
     def test_09_auth_subsidios_token_allowed_on_post(self):
         """El consumidor subsidios tiene permisos de escritura en POST."""
-        headers = {"Authorization": "Bearer subsidios-secret"}
+        subsidios_token = os.environ.get("SUBSIDIOS_TOKEN", "subsidios-secret")
+        headers = {"Authorization": f"Bearer {subsidios_token}"}
         valid, consumer, error, status = authenticate_request(headers, "POST")
         self.assertTrue(valid)
         self.assertEqual(consumer, CONSUMER_SUBSIDIOS)
